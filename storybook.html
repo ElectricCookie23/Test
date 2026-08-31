@@ -1,0 +1,2359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Enchanted Bedtime Storybook</title>
+  
+  <!-- Storybook Serifs, Fairytale Display Fonts & Rounded UI -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Berkshire+Swash&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Nunito:wght@600;700;800;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       1. COLOR PALETTES & BEDTIME THEME TOKENS
+       ========================================================================== */
+    :root {
+      --bg-page: #fdf6e7;
+      --bg-page-deep: #eddcb9;
+      --bg-vignette: rgba(70, 42, 18, 0.32);
+      --desk-wood: #26160d;
+      --desk-wood-grad: radial-gradient(circle at center, #3d2315 0%, #1a0e07 100%);
+      --text-ink: #2b170c;
+      --text-ink-faded: #8c735d;
+      --gold-accent: #c49a38;
+      --gold-glow: rgba(226, 181, 74, 0.45);
+      --book-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 5px 20px rgba(0, 0, 0, 0.4);
+      --page-radius: 20px;
+      --font-story: 'Lora', Georgia, serif;
+      --font-display: 'Berkshire Swash', cursive;
+      --font-ui: 'Nunito', sans-serif;
+      --editor-font-size: 28px;
+      --editor-line-height: 2.25;
+      --caret-color: #854d0e;
+    }
+
+    /* Candlelight Warmth */
+    body.theme-candle {
+      --bg-page: #fef0cd;
+      --bg-page-deep: #e8c78c;
+      --bg-vignette: rgba(94, 46, 13, 0.45);
+      --desk-wood-grad: radial-gradient(circle at center, #452106 0%, #170a04 100%);
+      --text-ink: #281206;
+      --gold-accent: #e5a92a;
+      --gold-glow: rgba(245, 185, 59, 0.55);
+      --caret-color: #b45309;
+    }
+
+    /* Twilight Starlight Mode */
+    body.theme-starlight {
+      --bg-page: #191d30;
+      --bg-page-deep: #101322;
+      --bg-vignette: rgba(3, 5, 14, 0.85);
+      --desk-wood-grad: radial-gradient(circle at center, #0e1222 0%, #05070d 100%);
+      --text-ink: #f3edd9;
+      --text-ink-faded: #7e8ab0;
+      --gold-accent: #f2cb6c;
+      --gold-glow: rgba(242, 203, 108, 0.35);
+      --book-shadow: 0 25px 70px rgba(0, 0, 0, 0.9);
+      --caret-color: #fbbf24;
+    }
+
+    /* Sweet Dream Pastel Mode */
+    body.theme-dream {
+      --bg-page: #fdf2f8;
+      --bg-page-deep: #fce7f3;
+      --bg-vignette: rgba(131, 24, 67, 0.22);
+      --desk-wood-grad: radial-gradient(circle at center, #381b2a 0%, #150a10 100%);
+      --text-ink: #3b1124;
+      --text-ink-faded: #9d5a7d;
+      --gold-accent: #e879f9;
+      --gold-glow: rgba(232, 121, 249, 0.4);
+      --caret-color: #db2777;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background: var(--desk-wood-grad);
+      color: var(--text-ink);
+      font-family: var(--font-story);
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow: hidden;
+      transition: background 0.8s ease, color 0.5s ease;
+      padding: 10px 16px;
+      position: relative;
+    }
+
+    /* Fullscreen Mode Styling */
+    body.is-fullscreen {
+      padding: 10px;
+    }
+    body.is-fullscreen .book-wrapper {
+      max-width: 100% !important;
+      width: 100% !important;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    body.is-fullscreen .book-cover-rim {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    body.is-fullscreen .parchment-page {
+      flex: 1;
+      min-height: calc(100vh - 160px);
+    }
+
+    /* Fullscreen Particle Canvases */
+    #ambient-canvas, #wand-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1;
+    }
+    #wand-canvas { z-index: 99; }
+
+    /* ==========================================================================
+       2. TOP BAR & FAIRYTALE CONTROLS
+       ========================================================================== */
+    header {
+      width: 100%;
+      max-width: 1020px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+      z-index: 10;
+      font-family: var(--font-ui);
+    }
+
+    .book-title-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #f7e6c4;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+    }
+
+    .book-title-badge svg {
+      width: 30px;
+      height: 30px;
+      fill: var(--gold-accent);
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+
+    .book-title-badge h1 {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      letter-spacing: 0.03em;
+      color: #faebd7;
+    }
+
+    .book-title-badge span {
+      font-size: 0.78rem;
+      font-weight: 800;
+      background: rgba(196, 154, 56, 0.25);
+      border: 1px solid var(--gold-accent);
+      padding: 3px 9px;
+      border-radius: 14px;
+      color: #fce79f;
+      letter-spacing: 0.05em;
+    }
+
+    .controls-panel {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(26, 14, 8, 0.85);
+      border: 1px solid rgba(196, 154, 56, 0.4);
+      border-radius: 30px;
+      padding: 5px 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.1);
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-ctrl {
+      background: transparent;
+      border: none;
+      color: #eddcb9;
+      cursor: pointer;
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: 0.86rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 9px;
+      border-radius: 14px;
+      transition: all 0.25s ease;
+    }
+
+    .btn-ctrl:hover {
+      background: rgba(196, 154, 56, 0.25);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .btn-ctrl.active-ctrl {
+      background: rgba(196, 154, 56, 0.4);
+      color: #ffd700;
+      box-shadow: 0 0 8px var(--gold-glow);
+    }
+
+    .btn-ctrl svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    .divider-v {
+      width: 1px;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .preset-select {
+      background: rgba(43, 23, 12, 0.9);
+      color: #eddcb9;
+      border: 1px solid var(--gold-accent);
+      padding: 5px 10px;
+      border-radius: 14px;
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* ==========================================================================
+       AI MAGIC TOOLBAR
+       ========================================================================== */
+    .ai-magic-bar {
+      width: 100%;
+      max-width: 1020px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+      z-index: 10;
+      font-family: var(--font-ui);
+    }
+
+    .btn-ai-magic {
+      background: linear-gradient(135deg, rgba(88, 48, 20, 0.92), rgba(45, 22, 9, 0.95));
+      border: 1px solid var(--gold-accent);
+      color: #fce79f;
+      cursor: pointer;
+      font-family: var(--font-ui);
+      font-weight: 800;
+      font-size: 0.83rem;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35), inset 0 1px 1px rgba(255,255,255,0.15);
+      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+      backdrop-filter: blur(6px);
+    }
+
+    .btn-ai-magic:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(125, 72, 30, 0.95), rgba(75, 38, 15, 0.95));
+      border-color: #ffd700;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px var(--gold-glow);
+    }
+
+    .btn-ai-magic:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .btn-ai-magic.active-reading {
+      background: linear-gradient(135deg, #1e3a8a, #172554);
+      border-color: #93c5fd;
+      color: #dbeafe;
+      animation: readingPulse 2s infinite alternate;
+    }
+
+    @keyframes readingPulse {
+      0% { box-shadow: 0 0 8px rgba(147, 197, 253, 0.3); }
+      100% { box-shadow: 0 0 20px rgba(147, 197, 253, 0.8); }
+    }
+
+    /* Sticker Tool Strip */
+    .sticker-tool-strip {
+      width: 100%;
+      max-width: 1020px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+      z-index: 10;
+      background: rgba(30, 16, 8, 0.7);
+      border: 1px solid rgba(196, 154, 56, 0.3);
+      border-radius: 25px;
+      padding: 5px 14px;
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      color: #f7e6c4;
+      backdrop-filter: blur(6px);
+    }
+
+    .sticker-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid transparent;
+      border-radius: 16px;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #eddcb9;
+      font-family: var(--font-ui);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .sticker-btn:hover {
+      background: rgba(196, 154, 56, 0.3);
+      transform: scale(1.1);
+    }
+
+    .sticker-btn.selected {
+      background: #854d0e;
+      border-color: #ffd700;
+      color: #fff;
+      box-shadow: 0 0 8px var(--gold-glow);
+    }
+
+    /* ==========================================================================
+       3. OPEN BOOK CONTAINER & PAGE STYLING
+       ========================================================================== */
+    .book-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 1020px;
+      margin: 0 auto;
+      z-index: 5;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    /* Silk Bookmark Ribbon */
+    .silk-ribbon {
+      position: absolute;
+      top: -12px;
+      left: 70px;
+      width: 28px;
+      height: 90px;
+      background: linear-gradient(180deg, #991b1b 0%, #7f1d1d 85%, transparent 100%);
+      box-shadow: 2px 4px 8px rgba(0,0,0,0.5);
+      z-index: 12;
+      border-radius: 0 0 4px 4px;
+      cursor: pointer;
+      transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+
+    .silk-ribbon::after {
+      content: '✦';
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #fde047;
+      font-size: 10px;
+    }
+
+    .silk-ribbon:hover { transform: translateY(8px); }
+
+    /* Outer Leather Cover Rim */
+    .book-cover-rim {
+      position: relative;
+      background: #4a2110;
+      background-image: radial-gradient(circle at 50% 0%, #6b3218 0%, #2f1307 100%);
+      padding: 18px 18px 26px 18px;
+      border-radius: 28px;
+      box-shadow: var(--book-shadow),
+                  inset 0 2px 4px rgba(255,255,255,0.25),
+                  inset 0 -3px 8px rgba(0,0,0,0.8);
+      border: 2px solid #854720;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .book-cover-rim::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border: 1px solid rgba(218, 165, 32, 0.35);
+      border-radius: 22px;
+      pointer-events: none;
+    }
+
+    /* Parchment Page */
+    .parchment-page {
+      position: relative;
+      background: radial-gradient(ellipse at 50% 30%, var(--bg-page) 0%, var(--bg-page-deep) 78%, #d8be92 100%);
+      border-radius: var(--page-radius);
+      flex: 1;
+      min-height: 0;
+      padding: 50px 52px 60px 52px;
+      box-shadow: inset 0 0 70px var(--bg-vignette), inset 0 0 15px rgba(0, 0, 0, 0.15), 0 10px 25px rgba(0,0,0,0.3);
+      border: 1px solid rgba(139, 94, 52, 0.3);
+      overflow-y: auto;
+      transition: background 0.8s ease, box-shadow 0.8s ease;
+      cursor: default;
+    }
+
+    .parchment-page.stamp-mode { cursor: crosshair !important; }
+
+    .page-texture {
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      mix-blend-mode: multiply;
+      border-radius: var(--page-radius);
+    }
+
+    .book-spine-crease {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 60px;
+      transform: translateX(-50%);
+      background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.035) 45%, rgba(0,0,0,0.07) 50%, rgba(0,0,0,0.035) 55%, transparent 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Gilded Corner Flourishes */
+    .corner-flourish {
+      position: absolute;
+      width: 68px;
+      height: 68px;
+      pointer-events: none;
+      z-index: 3;
+      opacity: 0.75;
+    }
+
+    .corner-flourish svg {
+      width: 100%;
+      height: 100%;
+      fill: var(--gold-accent);
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+    }
+
+    .corner-tl { top: 12px; left: 12px; }
+    .corner-tr { top: 12px; right: 12px; transform: scaleX(-1); }
+    .corner-bl { bottom: 12px; left: 12px; transform: scaleY(-1); }
+    .corner-br { bottom: 12px; right: 12px; transform: scale(-1); }
+
+    .page-header-ribbon {
+      text-align: center;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 4;
+    }
+
+    .chapter-eyebrow {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--gold-accent);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+      display: inline-block;
+      text-shadow: 0 0 10px var(--gold-glow);
+    }
+
+    .chapter-rule {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--gold-accent);
+      opacity: 0.6;
+    }
+
+    .chapter-rule::before,
+    .chapter-rule::after {
+      content: '';
+      height: 1px;
+      width: 80px;
+      background: linear-gradient(90deg, transparent, var(--gold-accent), transparent);
+    }
+
+    /* Placed Stickers on the Page */
+    .page-sticker-stamp {
+      position: absolute;
+      font-size: 2.2rem;
+      z-index: 15;
+      user-select: none;
+      cursor: grab;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.25));
+      animation: stampDrop 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      transition: transform 0.2s ease;
+    }
+
+    .page-sticker-stamp:hover { transform: scale(1.2) rotate(6deg); }
+
+    @keyframes stampDrop {
+      0% { transform: scale(2.5) translateY(-20px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    /* ==========================================================================
+       4. SYNCHRONIZED STORY EDITOR (ZERO CURSOR JUMP)
+       ========================================================================== */
+    .story-stage-container {
+      position: relative;
+      width: 100%;
+      min-height: 480px;
+      z-index: 6;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .story-text-shared {
+      font-family: var(--font-story);
+      font-size: var(--editor-font-size);
+      line-height: var(--editor-line-height);
+      letter-spacing: 0.015em;
+      word-spacing: 0.05em;
+      padding: 6px 14px;
+      width: 100%;
+      min-height: 480px;
+      text-align: left;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      border: none;
+      outline: none;
+      background: transparent;
+      box-sizing: border-box;
+      font-weight: 500;
+    }
+
+    .story-render-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      color: var(--text-ink);
+      pointer-events: none;
+      z-index: 1;
+      transition: color 0.4s ease;
+    }
+
+    .story-input-layer {
+      position: relative;
+      z-index: 2;
+      color: transparent;
+      caret-color: var(--caret-color);
+      resize: none;
+      overflow-y: hidden;
+      display: block;
+      cursor: text;
+    }
+
+    .story-input-layer::selection { background: rgba(217, 154, 30, 0.28); }
+
+    .faded-hint {
+      color: var(--text-ink-faded);
+      font-style: italic;
+      opacity: 0.55;
+      font-family: var(--font-story);
+      pointer-events: none;
+      display: inline;
+    }
+
+    /* ==========================================================================
+       5. BESPOKE, GENTLE STORYBOOK WORD ANIMATIONS
+       ========================================================================== */
+    .magic-word {
+      display: inline-block;
+      position: relative;
+      font-weight: 600;
+      white-space: pre;
+      cursor: pointer;
+    }
+
+    /* 1. FOX (Turns rust orange + wagging bushy tail & twitching fox ears) */
+    .magic-fox {
+      color: #cb4e18;
+      text-shadow: 0 0 10px rgba(217, 83, 30, 0.3);
+    }
+    .magic-fox::after {
+      content: '';
+      position: absolute;
+      right: -17px;
+      bottom: -3px;
+      width: 22px;
+      height: 20px;
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-position: bottom left;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 30'%3E%3Cpath d='M3,24 C8,26 16,28 24,20 C29,15 30,8 27,3 C24,9 20,13 14,15 C9,17 5,18 3,24 Z' fill='%23cb4e18'/%3E%3Cpath d='M27,3 C29,5 29,8 27,11 C25,12 23,10 24,7 C25,5 26,4 27,3 Z' fill='%23ffffff'/%3E%3C/svg%3E");
+      transform-origin: 2px 18px;
+      animation: foxTailWag 2.4s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .magic-fox::before {
+      content: '';
+      position: absolute;
+      left: 1px;
+      top: -7px;
+      width: 14px;
+      height: 8px;
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 14'%3E%3Cpolygon points='1,13 5,1 9,13' fill='%23cb4e18'/%3E%3Cpolygon points='14,13 18,1 22,13' fill='%23cb4e18'/%3E%3Cpolygon points='3,12 5,4 7,12' fill='%23ffcfb3'/%3E%3Cpolygon points='16,12 18,4 20,12' fill='%23ffcfb3'/%3E%3C/svg%3E");
+      pointer-events: none;
+      animation: foxEarsTwitch 4s ease-in-out infinite;
+    }
+    @keyframes foxTailWag {
+      0%, 100% { transform: rotate(-8deg); }
+      40% { transform: rotate(18deg); }
+      60% { transform: rotate(10deg); }
+      80% { transform: rotate(22deg); }
+    }
+    @keyframes foxEarsTwitch {
+      0%, 85%, 100% { transform: translateY(0); }
+      90% { transform: translateY(-2px) rotate(-3deg); }
+      95% { transform: translateY(-1px) rotate(3deg); }
+    }
+
+    /* 2. MOON (Glows pale gold + crescent moon rising from center) */
+    .magic-moon {
+      color: #a16207;
+      text-shadow: 0 0 14px rgba(245, 203, 92, 0.75), 0 0 28px rgba(254, 240, 138, 0.5);
+    }
+    body.theme-starlight .magic-moon { color: #fef08a; }
+    .magic-moon .moon-orb {
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 26px;
+      height: 26px;
+      pointer-events: none;
+      animation: moonGentleFloat 5s ease-in-out infinite;
+      filter: drop-shadow(0 0 8px rgba(254, 240, 138, 0.8));
+    }
+    .magic-moon .moon-orb svg { width: 100%; height: 100%; fill: #fef3c7; }
+    @keyframes moonGentleFloat {
+      0%, 100% { transform: translate(-50%, 0); }
+      50% { transform: translate(-50%, -6px) rotate(4deg); }
+    }
+
+    /* 3. SONG (Musical notes float up and bounce gently) */
+    .magic-song {
+      color: #9d174d;
+      text-shadow: 0 0 8px rgba(190, 75, 120, 0.3);
+    }
+    .magic-song .note-p {
+      position: absolute;
+      color: #be185d;
+      pointer-events: none;
+      opacity: 0;
+      animation: floatNotes 3.5s ease-in-out infinite;
+      font-family: var(--font-story);
+      font-weight: bold;
+    }
+    .magic-song .n1 { left: 15%; font-size: 14px; animation-delay: 0s; }
+    .magic-song .n2 { left: 55%; font-size: 17px; animation-delay: 1.2s; }
+    .magic-song .n3 { left: 85%; font-size: 13px; animation-delay: 2.3s; }
+    @keyframes floatNotes {
+      0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+      20% { opacity: 0.9; }
+      50% { transform: translate(6px, -20px) scale(1) rotate(12deg); opacity: 0.85; }
+      100% { transform: translate(8px, -45px) scale(0.7); opacity: 0; }
+    }
+
+    /* 4. STARS (Fairy stars twinkle and settle around the word) */
+    .magic-stars {
+      color: #a16207;
+      text-shadow: 0 0 10px rgba(234, 179, 8, 0.6);
+    }
+    body.theme-starlight .magic-stars { color: #fde047; }
+    .magic-stars .star-p {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      pointer-events: none;
+      animation: starTwinkle 3s ease-in-out infinite;
+    }
+    .magic-stars .s1 { top: -10px; left: -4px; animation-delay: 0.2s; }
+    .magic-stars .s2 { top: -14px; right: 10%; animation-delay: 1.5s; width: 14px; height: 14px; }
+    .magic-stars .s3 { bottom: -6px; right: -8px; animation-delay: 0.8s; width: 10px; height: 10px; }
+    .magic-stars .star-p svg { width: 100%; height: 100%; fill: #fbbf24; filter: drop-shadow(0 0 4px #fbbf24); }
+    @keyframes starTwinkle {
+      0%, 100% { transform: scale(0.4); opacity: 0.2; }
+      50% { transform: scale(1.2) rotate(45deg); opacity: 1; }
+    }
+
+    /* 5. DANCE (Letters sway side to side in a gentle waltz bounce) */
+    .magic-dance {
+      color: #8b3a72;
+      display: inline-flex;
+      animation: danceWaltz 2.6s ease-in-out infinite;
+      transform-origin: bottom center;
+    }
+    @keyframes danceWaltz {
+      0%, 100% { transform: translateY(0); }
+      20% { transform: translateY(-4px) rotate(-3.5deg); }
+      60% { transform: translateY(-4px) rotate(3.5deg); }
+    }
+
+    /* 6. SNOW (Cloud hovers over top of the word + flakes drift down) */
+    .magic-snow {
+      color: #2563eb;
+      text-shadow: 0 0 8px rgba(186, 230, 253, 0.6);
+    }
+    body.theme-starlight .magic-snow { color: #bae6fd; }
+    .magic-snow .snow-cloud {
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 14px;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    .magic-snow .snow-cloud svg { width: 100%; height: 100%; fill: #e0f2fe; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1)); }
+    .magic-snow .snowflake {
+      position: absolute;
+      color: #ffffff;
+      font-size: 10px;
+      pointer-events: none;
+      animation: driftSnow 4s linear infinite;
+    }
+    .magic-snow .f1 { left: 10%; top: -8px; animation-delay: 0s; }
+    .magic-snow .f2 { left: 50%; top: -8px; animation-delay: 1.4s; font-size: 12px; }
+    .magic-snow .f3 { left: 85%; top: -8px; animation-delay: 2.7s; font-size: 9px; }
+    @keyframes driftSnow {
+      0% { transform: translate(0, 0); opacity: 0; }
+      15% { opacity: 0.95; }
+      50% { transform: translate(8px, 20px) rotate(120deg); }
+      100% { transform: translate(-6px, 45px) rotate(260deg); opacity: 0; }
+    }
+
+    /* 7. YAWN (Delightful cozy drowsy sway with floating yawn bubble) */
+    .magic-yawn {
+      color: #a16207;
+      display: inline-block;
+      position: relative;
+      animation: cuteYawnSway 4.5s ease-in-out infinite;
+      transform-origin: bottom center;
+    }
+    body.theme-starlight .magic-yawn { color: #fde047; }
+    .magic-yawn .yawn-bubble {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      font-size: 15px;
+      pointer-events: none;
+      animation: cuteYawnFloat 4.5s ease-in-out infinite;
+    }
+    @keyframes cuteYawnFloat {
+      0%, 100% { transform: translateX(-50%) translateY(4px) scale(0.5); opacity: 0; }
+      30%, 70% { transform: translateX(-50%) translateY(-12px) scale(1.15); opacity: 1; filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.4)); }
+      90% { transform: translateX(-50%) translateY(-22px) scale(0.8); opacity: 0; }
+    }
+    @keyframes cuteYawnSway {
+      0%, 100% { transform: rotate(0deg); }
+      35% { transform: rotate(-3.5deg) translateY(-2px); }
+      70% { transform: rotate(2.5deg) translateY(-1px); }
+    }
+
+    /* 8. CLOUDS (Word turns puffy soft grey + clouds drift above) */
+    .magic-clouds {
+      color: #475569;
+      text-shadow: 0 0 8px rgba(148, 163, 184, 0.4);
+    }
+    body.theme-starlight .magic-clouds { color: #94a3b8; }
+    .magic-clouds .drift-cloud {
+      position: absolute;
+      top: -18px;
+      left: 10%;
+      width: 36px;
+      height: 18px;
+      pointer-events: none;
+      animation: cloudDrift 6s ease-in-out infinite alternate;
+      opacity: 0.75;
+    }
+    .magic-clouds .drift-cloud svg { width: 100%; height: 100%; fill: #cbd5e1; }
+    @keyframes cloudDrift {
+      0% { transform: translateX(-6px); }
+      100% { transform: translateX(18px); }
+    }
+
+    /* 9. ASLEEP (Zzz lazily drift upward and lamp dims out) */
+    .magic-asleep {
+      color: #3730a3;
+      text-shadow: 0 0 10px rgba(99, 102, 241, 0.35);
+    }
+    body.theme-starlight .magic-asleep { color: #a5b4fc; }
+    .magic-asleep .sleepy-z {
+      position: absolute;
+      font-family: var(--font-display);
+      color: #818cf8;
+      font-weight: bold;
+      pointer-events: none;
+      animation: sleepyZDrift 4s ease-in-out infinite;
+    }
+    .magic-asleep .z1 { left: 40%; top: -8px; font-size: 13px; animation-delay: 0s; }
+    .magic-asleep .z2 { left: 65%; top: -14px; font-size: 16px; animation-delay: 1.3s; }
+    .magic-asleep .z3 { left: 90%; top: -20px; font-size: 19px; animation-delay: 2.6s; }
+    .magic-asleep .bedtime-lamp {
+      position: absolute;
+      top: -20px;
+      left: 8px;
+      width: 15px;
+      height: 15px;
+      pointer-events: none;
+      animation: lampDimming 5s ease-in-out infinite;
+    }
+    .magic-asleep .bedtime-lamp svg { width: 100%; height: 100%; fill: #fde68a; }
+    @keyframes sleepyZDrift {
+      0% { transform: translate(0, 0); opacity: 0; }
+      25% { opacity: 0.85; }
+      75% { transform: translate(12px, -30px) scale(1.1); opacity: 0.6; }
+      100% { transform: translate(20px, -45px); opacity: 0; }
+    }
+    @keyframes lampDimming {
+      0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 6px #fde047); }
+      50% { opacity: 0.25; filter: none; }
+    }
+
+    /* 10. BUNNY (Word turns soft rose with illustrated perking bunny ears + playful hopping bounce) */
+    .magic-bunny {
+      color: #be185d;
+      display: inline-flex;
+      animation: bunnyGentleHop 3.2s ease-in-out infinite;
+      transform-origin: bottom center;
+    }
+    .magic-bunny::before {
+      content: '';
+      position: absolute;
+      left: 2px;
+      top: -12px;
+      width: 16px;
+      height: 13px;
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 20'%3E%3Cellipse cx='6' cy='10' rx='3.5' ry='9' fill='%23fce7f3' stroke='%23be185d' stroke-width='1.5'/%3E%3Cellipse cx='18' cy='10' rx='3.5' ry='9' fill='%23fce7f3' stroke='%23be185d' stroke-width='1.5'/%3E%3Cellipse cx='6' cy='11' rx='1.8' ry='6' fill='%23f472b6'/%3E%3Cellipse cx='18' cy='11' rx='1.8' ry='6' fill='%23f472b6'/%3E%3C/svg%3E");
+      pointer-events: none;
+      animation: bunnyEarTwitch 4s ease-in-out infinite;
+    }
+    @keyframes bunnyGentleHop {
+      0%, 75%, 100% { transform: translateY(0) scaleY(1); }
+      82% { transform: translateY(-7px) scaleY(1.05); }
+      90% { transform: translateY(0) scaleY(0.95); }
+    }
+    @keyframes bunnyEarTwitch {
+      0%, 80%, 100% { transform: rotate(0deg); }
+      85% { transform: rotate(-8deg); }
+      92% { transform: rotate(8deg); }
+    }
+
+    /* 11. BEAR / TEDDY (Bear emoji peeks up and bobs from BEHIND the text) */
+    .magic-bear {
+      color: #854d0e;
+      position: relative;
+      display: inline-block;
+      z-index: 1;
+    }
+    body.theme-starlight .magic-bear { color: #fde047; }
+    .magic-bear .bear-peeker {
+      position: absolute;
+      left: 50%;
+      bottom: 2px;
+      font-size: 20px;
+      z-index: -1;
+      pointer-events: none;
+      animation: bearPeekFromBehind 3.8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+    }
+    @keyframes bearPeekFromBehind {
+      0%, 100% {
+        transform: translateX(-50%) translateY(8px) scale(0.4);
+        opacity: 0;
+      }
+      25%, 75% {
+        transform: translateX(-50%) translateY(-19px) scale(1.12) rotate(6deg);
+        opacity: 1;
+        filter: drop-shadow(0 2px 5px rgba(0,0,0,0.25));
+      }
+      50% {
+        transform: translateX(-50%) translateY(-23px) scale(1.18) rotate(-6deg);
+        opacity: 1;
+        filter: drop-shadow(0 3px 7px rgba(0,0,0,0.3));
+      }
+    }
+
+    /* 12. OWL (Feathered hazelnut with glowing big round owl eyes blinking sleepily) */
+    .magic-owl {
+      color: #5c3017;
+      position: relative;
+    }
+    body.theme-starlight .magic-owl { color: #fde047; }
+    .magic-owl::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: -13px;
+      transform: translateX(-50%);
+      width: 24px;
+      height: 13px;
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 16'%3E%3Ccircle cx='9' cy='8' r='6.5' fill='%23fef08a' stroke='%235c3017' stroke-width='1.5'/%3E%3Ccircle cx='21' cy='8' r='6.5' fill='%23fef08a' stroke='%235c3017' stroke-width='1.5'/%3E%3Ccircle cx='9' cy='8' r='2.6' fill='%231c1917'/%3E%3Ccircle cx='21' cy='8' r='2.6' fill='%231c1917'/%3E%3Cpolygon points='15,8 13,13 17,13' fill='%23ea580c'/%3E%3C/svg%3E");
+      animation: owlSleepyBlink 6s ease-in-out infinite;
+    }
+    @keyframes owlSleepyBlink {
+      0%, 92%, 97%, 100% { transform: translateX(-50%) scaleY(1); }
+      94% { transform: translateX(-50%) scaleY(0.1); }
+    }
+
+    /* 13. RIVER (Turns crystal aquamarine with continuous undercurrent water ripples) */
+    .magic-river {
+      color: #0369a1;
+      position: relative;
+    }
+    body.theme-starlight .magic-river { color: #38bdf8; }
+    .magic-river::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -3px;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #38bdf8, #818cf8, #0ea5e9, #38bdf8);
+      background-size: 200% 100%;
+      border-radius: 2px;
+      animation: riverFlow 3s linear infinite;
+      opacity: 0.85;
+    }
+    @keyframes riverFlow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    /* 14. FLOWER (Turns blossom pink as delicate hand-drawn petals unfurl) */
+    .magic-flower {
+      color: #be185d;
+      position: relative;
+    }
+    body.theme-starlight .magic-flower { color: #f472b6; }
+    .magic-flower .f-petal {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      pointer-events: none;
+      animation: flowerPetalBloom 4s ease-in-out infinite;
+    }
+    .magic-flower .fp1 { top: -11px; left: 10%; animation-delay: 0s; }
+    .magic-flower .fp2 { top: -14px; right: 15%; animation-delay: 2s; width: 14px; height: 14px; }
+    .magic-flower .f-petal svg { width: 100%; height: 100%; fill: #f472b6; filter: drop-shadow(0 0 3px #fbcfe8); }
+    @keyframes flowerPetalBloom {
+      0%, 100% { transform: scale(0.6) rotate(0deg); opacity: 0.3; }
+      50% { transform: scale(1.15) rotate(35deg); opacity: 1; }
+    }
+
+    /* 15. FIREFLY (Luminous amber-green glowing fireflies orbiting in organic paths) */
+    .magic-firefly {
+      color: #4d7c0f;
+      position: relative;
+    }
+    body.theme-starlight .magic-firefly { color: #bef264; }
+    .magic-firefly .firefly-bug {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #bef264;
+      box-shadow: 0 0 8px #a3e635;
+      pointer-events: none;
+      animation: fireflyHover 4s ease-in-out infinite;
+    }
+    .magic-firefly .fb1 { top: -8px; left: 15%; animation-delay: 0s; }
+    .magic-firefly .fb2 { top: -14px; right: 20%; animation-delay: 2s; }
+    @keyframes fireflyHover {
+      0%, 100% { transform: translate(0, 0); opacity: 0.3; }
+      50% { transform: translate(7px, -11px); opacity: 1; box-shadow: 0 0 12px #bef264; }
+    }
+
+    /* 16. TEA (Warm spiced cinnamon with delicate wisps of steam curling upward) */
+    .magic-tea {
+      color: #9a3412;
+      position: relative;
+    }
+    body.theme-starlight .magic-tea { color: #fdba74; }
+    .magic-tea .tea-steam {
+      position: absolute;
+      width: 8px;
+      height: 16px;
+      pointer-events: none;
+      opacity: 0;
+      animation: steamCurl 3.6s ease-in-out infinite;
+    }
+    .magic-tea .ts1 { top: -14px; left: 35%; animation-delay: 0s; }
+    .magic-tea .ts2 { top: -16px; left: 65%; animation-delay: 1.8s; }
+    .magic-tea .tea-steam svg { width: 100%; height: 100%; stroke: #fdba74; fill: none; stroke-width: 2; stroke-linecap: round; }
+    @keyframes steamCurl {
+      0% { transform: translateY(4px) scale(0.6); opacity: 0; }
+      40% { opacity: 0.75; }
+      100% { transform: translateY(-16px) scale(1.1); opacity: 0; }
+    }
+
+    /* ==========================================================================
+       6. SPELLBOOK KEY DRAWER
+       ========================================================================== */
+    .spellbook-drawer {
+      margin-top: 20px;
+      background: rgba(36, 18, 9, 0.8);
+      border: 1px solid rgba(196, 154, 56, 0.4);
+      border-radius: 20px;
+      padding: 14px 20px;
+      width: 100%;
+      max-width: 1020px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+      z-index: 10;
+    }
+
+    .spellbook-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #faebd7;
+      font-family: var(--font-ui);
+      font-size: 0.88rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .spellbook-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .spell-tag {
+      background: rgba(196, 154, 56, 0.16);
+      border: 1px solid rgba(196, 154, 56, 0.45);
+      color: #fce79f;
+      padding: 5px 11px;
+      border-radius: 18px;
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .spell-tag:hover {
+      background: rgba(196, 154, 56, 0.45);
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    }
+
+    /* ==========================================================================
+       7. FAIRYTALE MODALS & TOAST NOTIFICATION
+       ========================================================================== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 8, 4, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 16px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .parchment-modal {
+      background: radial-gradient(ellipse at 50% 20%, #faf3e5 0%, #ecdcb9 80%, #d8be92 100%);
+      border: 2px solid var(--gold-accent);
+      border-radius: 22px;
+      width: 100%;
+      max-width: 580px;
+      padding: 28px;
+      color: #2b170c;
+      box-shadow: 0 25px 70px rgba(0,0,0,0.8), inset 0 0 40px rgba(139, 94, 52, 0.2);
+      transform: translateY(20px) scale(0.96);
+      transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      position: relative;
+    }
+
+    .modal-overlay.active .parchment-modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #78350f;
+      line-height: 1;
+      padding: 4px;
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: #78350f;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    .modal-subtitle {
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 0.88rem;
+      color: #8c5a2b;
+      margin-bottom: 18px;
+    }
+
+    .prompt-field-group {
+      margin-bottom: 12px;
+      font-family: var(--font-ui);
+    }
+
+    .prompt-label {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #592e0d;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .prompt-chip-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .prompt-chip {
+      background: rgba(196, 154, 56, 0.15);
+      border: 1px solid rgba(196, 154, 56, 0.45);
+      border-radius: 14px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #451a03;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .prompt-chip.selected {
+      background: #78350f;
+      color: #fef3c7;
+      border-color: #78350f;
+      box-shadow: 0 2px 6px rgba(120, 53, 15, 0.4);
+    }
+
+    .custom-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(196, 154, 56, 0.6);
+      border-radius: 12px;
+      padding: 9px 12px;
+      font-family: var(--font-story);
+      font-size: 0.95rem;
+      color: #2b170c;
+      outline: none;
+      box-sizing: border-box;
+      margin-top: 4px;
+    }
+
+    .modal-submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #854d0e, #592e0d);
+      color: #fef08a;
+      border: 1px solid #ffd700;
+      border-radius: 16px;
+      padding: 11px;
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+
+    .modal-submit-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #a16207, #78350f);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px var(--gold-glow);
+    }
+
+    /* Picture Frame Modal (for Imagen) */
+    .illustration-frame {
+      border: 8px solid #926712;
+      border-image: linear-gradient(to bottom right, #fef08a, #926712, #451a03) 1;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fbf5e8;
+      min-height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 12px 0;
+    }
+
+    .illustration-frame img {
+      width: 100%;
+      height: auto;
+      max-height: 420px;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Toast */
+    .storybook-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(36, 18, 9, 0.95);
+      border: 1px solid var(--gold-accent);
+      color: #fce79f;
+      padding: 9px 20px;
+      border-radius: 24px;
+      font-family: var(--font-ui);
+      font-size: 0.88rem;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      transition: transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .storybook-toast.show { transform: translateX(-50%) translateY(0); }
+
+    .fairy-spinner {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(254, 240, 138, 0.3);
+      border-radius: 50%;
+      border-top-color: #fef08a;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+      body { padding: 10px 6px 40px 6px; }
+      :root { --editor-font-size: 21px; --editor-line-height: 2.0; }
+      .parchment-page { padding: 34px 18px 38px 18px; min-height: 520px; }
+      .book-title-badge h1 { font-size: 1.15rem; }
+      header, .ai-magic-bar, .sticker-tool-strip { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fullscreen Particle Canvases -->
+  <canvas id="ambient-canvas"></canvas>
+  <canvas id="wand-canvas"></canvas>
+
+  <!-- Top Ambient Navigation Bar -->
+  <header>
+    <div class="book-title-badge">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.84L18 11v7h-2v-6H8v6H6v-7l6-5.16z"/>
+      </svg>
+      <h1>Bedtime Storybook</h1>
+      <span>Ages 4–6</span>
+    </div>
+
+    <div class="controls-panel">
+      <!-- Story Presets -->
+      <select id="preset-selector" class="preset-select" title="Choose a cozy starter tale">
+        <option value="" disabled selected>✨ Cozy Bedtime Tales...</option>
+        <option value="preset1">🦊 The Sleepy Fox's Song</option>
+        <option value="preset2">🌙 Dance of the Little Stars</option>
+        <option value="preset3">🐰 The Little Bunny's River Dream</option>
+        <option value="preset4">🐻 Teddy Bear's Cozy Tea</option>
+      </select>
+
+      <div class="divider-v"></div>
+
+      <!-- Text Size Controls -->
+      <button class="btn-ctrl" id="btn-font-smaller" title="Smaller text">A-</button>
+      <button class="btn-ctrl" id="btn-font-bigger" title="Bigger text">A+</button>
+
+      <div class="divider-v"></div>
+
+      <!-- Theme Lighting Selector -->
+      <button class="btn-ctrl" id="btn-theme-toggle" title="Switch bedtime light mode">
+        <span id="theme-icon">🕯️</span>
+        <span id="theme-label" style="font-size:0.78rem">Candle</span>
+      </button>
+
+      <div class="divider-v"></div>
+
+      <!-- Bedtime Ambient Soundscape Selector -->
+      <button class="btn-ctrl" id="btn-soundscape-toggle" title="Change ambient bedtime sound">
+        <span id="sound-icon">🎶</span>
+        <span id="sound-label" style="font-size:0.78rem">Lullaby</span>
+      </button>
+
+      <!-- Fairy Wand Sparkler Toggle -->
+      <button class="btn-ctrl active-ctrl" id="btn-wand-toggle" title="Toggle Fairy Wand Stardust Trail">
+        <span>🪄</span>
+      </button>
+
+      <!-- Fullscreen Toggle Button -->
+      <button class="btn-ctrl" id="btn-fullscreen-toggle" title="Toggle Fullscreen View">
+        <span>⛶</span>
+      </button>
+
+      <!-- Clear Book Button -->
+      <button class="btn-ctrl" id="btn-clear" title="Clear page and start fresh">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- AI Bedtime Magic Actions Bar -->
+  <div class="ai-magic-bar">
+    <button class="btn-ai-magic" id="btn-ai-continue" title="Weave the next sleepy paragraph">
+      <span>✨ Continue Tale</span>
+    </button>
+    <button class="btn-ai-magic" id="btn-ai-rhyme" title="Turn your typed tale into a gentle rhyming lullaby">
+      <span>✨ Turn into Rhyme</span>
+    </button>
+    <button class="btn-ai-magic" id="btn-ai-read" title="Listen to the tale read in a gentle storyteller voice">
+      <span id="read-btn-text">✨ Read Bedtime Tale</span>
+    </button>
+    <button class="btn-ai-magic" id="btn-ai-illustrate" title="Draw a fairy-tale picture for this page">
+      <span>✨ Dream Illustration</span>
+    </button>
+    <button class="btn-ai-magic" id="btn-ai-compose" title="Craft a custom bedtime story for your child">
+      <span>✨ Create New Tale...</span>
+    </button>
+  </div>
+
+  <!-- Storybook Sticker Stamp Collection -->
+  <div class="sticker-tool-strip">
+    <span style="font-weight: 800; color: #fce79f; margin-right: 4px;">🎨 Bedtime Stickers:</span>
+    <button class="sticker-btn" data-emoji="🌙">🌙 Moon</button>
+    <button class="sticker-btn" data-emoji="🦊">🦊 Fox</button>
+    <button class="sticker-btn" data-emoji="🐰">🐰 Bunny</button>
+    <button class="sticker-btn" data-emoji="🧸">🧸 Teddy</button>
+    <button class="sticker-btn" data-emoji="🦉">🦉 Owl</button>
+    <button class="sticker-btn" data-emoji="🌸">🌸 Flower</button>
+    <button class="sticker-btn" data-emoji="👑">👑 Crown</button>
+    <button class="sticker-btn" data-emoji="🍄">🍄 Mushroom</button>
+    <button class="sticker-btn" data-emoji="🦋">🦋 Butterfly</button>
+    <button class="btn-ctrl" id="btn-clear-stickers" style="font-size: 0.72rem; padding: 2px 7px; margin-left: 6px;" title="Clear stickers from page">Clear ✕</button>
+  </div>
+
+  <!-- Gilded Storybook Container -->
+  <main class="book-wrapper">
+    <!-- Red Silk Bookmark -->
+    <div class="silk-ribbon" id="silk-ribbon" title="Your Fairytale Bookmark"></div>
+
+    <div class="book-cover-rim">
+      
+      <!-- Parchment Page -->
+      <div class="parchment-page" id="book-page">
+        <div class="page-texture"></div>
+        <div class="book-spine-crease"></div>
+
+        <!-- 4 Gilded Corner Flourishes -->
+        <div class="corner-flourish corner-tl"><svg viewBox="0 0 100 100"><path d="M10,10 C40,10 65,35 65,65 C65,50 50,35 35,35 C20,35 15,25 10,10 Z M10,10 C10,40 35,65 65,65 C50,65 35,50 35,35 C35,20 25,15 10,10 Z M5,5 L25,5 C15,15 15,15 5,25 Z"/></svg></div>
+        <div class="corner-flourish corner-tr"><svg viewBox="0 0 100 100"><path d="M10,10 C40,10 65,35 65,65 C65,50 50,35 35,35 C20,35 15,25 10,10 Z M10,10 C10,40 35,65 65,65 C50,65 35,50 35,35 C35,20 25,15 10,10 Z M5,5 L25,5 C15,15 15,15 5,25 Z"/></svg></div>
+        <div class="corner-flourish corner-bl"><svg viewBox="0 0 100 100"><path d="M10,10 C40,10 65,35 65,65 C65,50 50,35 35,35 C20,35 15,25 10,10 Z M10,10 C10,40 35,65 65,65 C50,65 35,50 35,35 C35,20 25,15 10,10 Z M5,5 L25,5 C15,15 15,15 5,25 Z"/></svg></div>
+        <div class="corner-flourish corner-br"><svg viewBox="0 0 100 100"><path d="M10,10 C40,10 65,35 65,65 C65,50 50,35 35,35 C20,35 15,25 10,10 Z M10,10 C10,40 35,65 65,65 C50,65 35,50 35,35 C35,20 25,15 10,10 Z M5,5 L25,5 C15,15 15,15 5,25 Z"/></svg></div>
+
+        <!-- Page Header Ribbon -->
+        <div class="page-header-ribbon">
+          <div class="chapter-eyebrow">A Bedtime Tale</div>
+          <div class="chapter-rule">✦ ✧ ✦</div>
+        </div>
+
+        <!-- Interactive Story Synchronized Stage -->
+        <div class="story-stage-container">
+          <div id="story-render" class="story-text-shared story-render-layer" aria-hidden="true"></div>
+          <textarea id="story-input" class="story-text-shared story-input-layer" spellcheck="false" autofocus placeholder=""></textarea>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Interactive Spell Words Discovery Drawer -->
+  <aside class="spellbook-drawer">
+    <div class="spellbook-header">
+      <span>✨ Tap any Magical Word to type into your tale:</span>
+      <span class="audio-status" id="ambient-status" style="font-size: 0.78rem; opacity: 0.85;">🎵 Lullaby Mode</span>
+    </div>
+    <div class="spellbook-tags">
+      <button class="spell-tag" data-word="fox">🦊 fox</button>
+      <button class="spell-tag" data-word="bunny">🐰 bunny</button>
+      <button class="spell-tag" data-word="bear">🧸 bear</button>
+      <button class="spell-tag" data-word="owl">🦉 owl</button>
+      <button class="spell-tag" data-word="moon">🌙 moon</button>
+      <button class="spell-tag" data-word="stars">⭐ stars</button>
+      <button class="spell-tag" data-word="river">🌊 river</button>
+      <button class="spell-tag" data-word="flower">🌸 flower</button>
+      <button class="spell-tag" data-word="firefly">🪲 firefly</button>
+      <button class="spell-tag" data-word="tea">☕ tea</button>
+      <button class="spell-tag" data-word="song">🎶 song</button>
+      <button class="spell-tag" data-word="dance">💃 dance</button>
+      <button class="spell-tag" data-word="snow">❄️ snow</button>
+      <button class="spell-tag" data-word="yawn">🥱 yawn</button>
+      <button class="spell-tag" data-word="clouds">☁️ clouds</button>
+      <button class="spell-tag" data-word="asleep">💤 asleep</button>
+    </div>
+  </aside>
+
+  <!-- Modal 1: Create New Tale Prompt Builder -->
+  <div class="modal-overlay" id="compose-modal">
+    <div class="parchment-modal">
+      <button class="modal-close-btn" id="compose-close">&times;</button>
+      <div class="modal-title">✨ Dream a Bedtime Tale</div>
+      <div class="modal-subtitle">Pick bedtime ingredients to weave a cozy story (Ages 4–6)</div>
+
+      <div class="prompt-field-group">
+        <label class="prompt-label">Choose a sleepy friend:</label>
+        <div class="prompt-chip-container" id="chip-character">
+          <span class="prompt-chip selected" data-val="a tiny cozy fox">🦊 Little Fox</span>
+          <span class="prompt-chip" data-val="a sleepy fluffy bunny">🐰 Cloud Bunny</span>
+          <span class="prompt-chip" data-val="a cuddly baby teddy bear">🧸 Teddy Bear</span>
+          <span class="prompt-chip" data-val="a gentle little owl">🦉 Little Owl</span>
+        </div>
+      </div>
+
+      <div class="prompt-field-group">
+        <label class="prompt-label">Where does the story happen?</label>
+        <div class="prompt-chip-container" id="chip-setting">
+          <span class="prompt-chip selected" data-val="a whisper-quiet pine forest under the glowing moon">🌲 Whispering Forest</span>
+          <span class="prompt-chip" data-val="a warm mossy hollow with glowing fireflies and gentle river">🍂 Firefly River</span>
+          <span class="prompt-chip" data-val="a soft cloud castle in the twilight sky">☁️ Cloud Castle</span>
+          <span class="prompt-chip" data-val="a quiet snowy glade with cozy warm tea">❄️ Snowy Tea Glade</span>
+        </div>
+      </div>
+
+      <div class="prompt-field-group">
+        <label class="prompt-label">Storyteller Voice (Gemini TTS):</label>
+        <div class="prompt-chip-container" id="chip-voice">
+          <span class="prompt-chip selected" data-val="Aoede">🧚 Fairy Godmother (Aoede)</span>
+          <span class="prompt-chip" data-val="Puck">🧝 Gentle Elf (Puck)</span>
+          <span class="prompt-chip" data-val="Kore">🦉 Cozy Storyteller (Kore)</span>
+        </div>
+      </div>
+
+      <div class="prompt-field-group">
+        <label class="prompt-label">Child's Name / Special Wish (Optional):</label>
+        <input type="text" id="custom-story-theme" class="custom-input" placeholder="e.g. For little Liam who loves stars and river stones..." />
+      </div>
+
+      <button class="modal-submit-btn" id="btn-generate-tale">✨ Weave Bedtime Tale</button>
+    </div>
+  </div>
+
+  <!-- Modal 2: Dream Illustration (Imagen 4.0 Viewer) -->
+  <div class="modal-overlay" id="illustrate-modal">
+    <div class="parchment-modal" style="max-width: 620px;">
+      <button class="modal-close-btn" id="illustrate-close">&times;</button>
+      <div class="modal-title">✨ Storybook Illustration</div>
+      <div class="modal-subtitle" id="illustrate-status-text">Painting a vintage fairy-tale watercolor for your bedtime story...</div>
+
+      <div class="illustration-frame" id="illustration-box">
+        <div class="fairy-spinner" style="width: 36px; height: 36px; border-width: 3px;"></div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 12px;">
+        <button class="modal-submit-btn" id="btn-re-illustrate" style="margin-top: 0;">✨ Paint Another</button>
+        <button class="btn-ctrl" id="btn-close-illustrate" style="background: rgba(120, 53, 15, 0.15); border: 1px solid var(--gold-accent); color: #451a03; padding: 0 18px; border-radius: 16px; font-weight: bold;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Non-intrusive Toast Notice -->
+  <div class="storybook-toast" id="story-toast">
+    <span id="toast-icon">✨</span>
+    <span id="toast-message">The magic spell has begun...</span>
+  </div>
+
+  <!-- Hidden Audio Player for Gemini TTS -->
+  <audio id="tts-audio-player" style="display: none;"></audio>
+
+  <!-- ==========================================================================
+       JAVASCRIPT LOGIC
+       ========================================================================== -->
+  <script>
+    const apiKey = ""; // Provided by execution environment
+
+    // Bedtime Stories Presets
+    const PRESETS = {
+      preset1: `Once upon a time, a tiny fox curled up on the soft moss. Up above, the gentle moon began to glow, and a sleepy song echoed through the tall trees. The little stars began to twinkle as the night arrived, and with one big lazy yawn, the little creature fell fast asleep.`,
+      preset2: `High in the deep velvet sky, the bright stars began a slow and gentle dance with the passing clouds. The warm moon watched over the quiet hills, humming a peaceful song for all the sleepy children below until they were gently asleep.`,
+      preset3: `A fluffy little bunny hopped softly beside the quiet river under the glowing moon. Delicate flower petals drifted through the cool night air, and tiny fireflies guided the way home until everyone was warm and asleep.`,
+      preset4: `Baby teddy bear sat in the mossy hollow, sipping warm bedtime tea. Soft white snow floated down from the sleepy clouds, and with a lazy yawn, the cozy bear drifted fast asleep.`
+    };
+
+    // DOM References
+    const storyInput = document.getElementById('story-input');
+    const storyRender = document.getElementById('story-render');
+    const bookPage = document.getElementById('book-page');
+    const presetSelector = document.getElementById('preset-selector');
+    const btnFontSmaller = document.getElementById('btn-font-smaller');
+    const btnFontBigger = document.getElementById('btn-font-bigger');
+    const btnThemeToggle = document.getElementById('btn-theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const themeLabel = document.getElementById('theme-label');
+    const btnSoundscapeToggle = document.getElementById('btn-soundscape-toggle');
+    const soundIcon = document.getElementById('sound-icon');
+    const soundLabel = document.getElementById('sound-label');
+    const btnWandToggle = document.getElementById('btn-wand-toggle');
+    const btnFullscreenToggle = document.getElementById('btn-fullscreen-toggle');
+    const btnClear = document.getElementById('btn-clear');
+    const ambientStatus = document.getElementById('ambient-status');
+    const spellTags = document.querySelectorAll('.spell-tag');
+    const storyToast = document.getElementById('story-toast');
+    const toastMessage = document.getElementById('toast-message');
+    const toastIcon = document.getElementById('toast-icon');
+    const stickerBtns = document.querySelectorAll('.sticker-btn');
+    const btnClearStickers = document.getElementById('btn-clear-stickers');
+    const silkRibbon = document.getElementById('silk-ribbon');
+
+    // AI Buttons
+    const btnAiContinue = document.getElementById('btn-ai-continue');
+    const btnAiRhyme = document.getElementById('btn-ai-rhyme');
+    const btnAiRead = document.getElementById('btn-ai-read');
+    const readBtnText = document.getElementById('read-btn-text');
+    const btnAiIllustrate = document.getElementById('btn-ai-illustrate');
+    const btnAiCompose = document.getElementById('btn-ai-compose');
+    const ttsAudioPlayer = document.getElementById('tts-audio-player');
+
+    // Modals
+    const composeModal = document.getElementById('compose-modal');
+    const composeClose = document.getElementById('compose-close');
+    const btnGenerateTale = document.getElementById('btn-generate-tale');
+    const customStoryTheme = document.getElementById('custom-story-theme');
+    const illustrateModal = document.getElementById('illustrate-modal');
+    const illustrateClose = document.getElementById('illustrate-close');
+    const btnCloseIllustrate = document.getElementById('btn-close-illustrate');
+    const btnReIllustrate = document.getElementById('btn-re-illustrate');
+    const illustrationBox = document.getElementById('illustration-box');
+    const illustrateStatusText = document.getElementById('illustrate-status-text');
+
+    let currentFontSize = 28;
+    const themes = ['candle', 'starlight', 'dream', 'default'];
+    let currentThemeIdx = 0;
+    let selectedVoice = "Aoede";
+    let isReadingAudio = false;
+    let activeStickerEmoji = null;
+    let wandEnabled = true;
+
+    // Toast Notice Helper
+    let toastTimeout = null;
+    function showToast(msg, icon = '✨', duration = 3500) {
+      toastIcon.textContent = icon;
+      toastMessage.textContent = msg;
+      storyToast.classList.add('show');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        storyToast.classList.remove('show');
+      }, duration);
+    }
+
+    // Exponential Backoff API Wrapper
+    async function callGeminiApi(url, payload, maxRetries = 5) {
+      const delays = [1000, 2000, 4000, 8000, 16000];
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return await response.json();
+        } catch (err) {
+          if (attempt === maxRetries) throw err;
+          await new Promise(res => setTimeout(res, delays[attempt] || 16000));
+        }
+      }
+    }
+
+    // PCM to WAV converter for Gemini TTS
+    function pcmToWav(base64Data, mimeType) {
+      let sampleRate = 24000;
+      if (mimeType) {
+        const match = mimeType.match(/rate=(\d+)/);
+        if (match) sampleRate = parseInt(match[1], 10);
+      }
+      const byteCharacters = atob(base64Data);
+      const byteArray = new Uint8Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteArray[i] = byteCharacters.charCodeAt(i);
+      }
+      const pcm16 = new Int16Array(byteArray.buffer);
+      const numChannels = 1;
+      const bytesPerSample = 2;
+      const blockAlign = numChannels * bytesPerSample;
+      const byteRate = sampleRate * blockAlign;
+      const dataSize = pcm16.length * bytesPerSample;
+      const buffer = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(buffer);
+
+      function writeStr(offset, str) {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      }
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + dataSize, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, 16, true);
+      writeStr(36, 'data');
+      view.setUint32(40, dataSize, true);
+
+      let offset = 44;
+      for (let i = 0; i < pcm16.length; i++, offset += 2) {
+        view.setInt16(offset, pcm16[i], true);
+      }
+      return new Blob([buffer], { type: 'audio/wav' });
+    }
+
+    // ==========================================================================
+    // CAREFULLY CURATED STORYBOOK WORDS ENGINE
+    // ==========================================================================
+    const MAGIC_RULES = [
+      { id: 'fox', regex: /^(fox|foxes)$/i, render: (w) => `<span class="magic-word magic-fox">${escapeHtml(w)}</span>` },
+      { id: 'moon', regex: /^(moon|moons)$/i, render: (w) => `<span class="magic-word magic-moon"><span class="moon-orb"><svg viewBox="0 0 24 24"><path d="M12.3 2a10 10 0 0 0-1.9 19.8 10 10 0 0 0 9.4-6.8 8 8 0 0 1-7.5-13z"/></svg></span>${escapeHtml(w)}</span>` },
+      { id: 'song', regex: /^(song|songs|sing|singing)$/i, render: (w) => `<span class="magic-word magic-song"><span class="note-p n1">♪</span><span class="note-p n2">♫</span><span class="note-p n3">♩</span>${escapeHtml(w)}</span>` },
+      { id: 'stars', regex: /^(star|stars|starlight)$/i, render: (w) => `<span class="magic-word magic-stars"><span class="star-p s1"><svg viewBox="0 0 24 24"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5z"/></svg></span><span class="star-p s2"><svg viewBox="0 0 24 24"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5z"/></svg></span><span class="star-p s3"><svg viewBox="0 0 24 24"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5z"/></svg></span>${escapeHtml(w)}</span>` },
+      { id: 'dance', regex: /^(dance|dances|dancing)$/i, render: (w) => `<span class="magic-word magic-dance">${escapeHtml(w)}</span>` },
+      { id: 'snow', regex: /^(snow|snows|snowing|snowflake|snowflakes)$/i, render: (w) => `<span class="magic-word magic-snow"><span class="snow-cloud"><svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></span><span class="snowflake f1">❄</span><span class="snowflake f2">❅</span><span class="snowflake f3">·</span>${escapeHtml(w)}</span>` },
+      { id: 'yawn', regex: /^(yawn|yawns|yawning)$/i, render: (w) => `<span class="magic-word magic-yawn"><span class="yawn-bubble">🥱</span>${escapeHtml(w)}</span>` },
+      { id: 'clouds', regex: /^(cloud|clouds|cloudy)$/i, render: (w) => `<span class="magic-word magic-clouds"><span class="drift-cloud"><svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></span>${escapeHtml(w)}</span>` },
+      { id: 'asleep', regex: /^(asleep|sleep|sleeps|sleeping|sleepy)$/i, render: (w) => `<span class="magic-word magic-asleep"><span class="bedtime-lamp"><svg viewBox="0 0 24 24"><path d="M12 2C8 2 6 6 6 10h12c0-4-2-8-6-8zm-1 10v4h2v-4h-2zm-3 6h8v2H8v-2z"/></svg></span><span class="sleepy-z z1">z</span><span class="sleepy-z z2">z</span><span class="sleepy-z z3">Z</span>${escapeHtml(w)}</span>` },
+      { id: 'bunny', regex: /^(bunny|bunnies|rabbit|rabbits)$/i, render: (w) => `<span class="magic-word magic-bunny">${escapeHtml(w)}</span>` },
+      { id: 'bear', regex: /^(bear|bears|teddy)$/i, render: (w) => `<span class="magic-word magic-bear"><span class="bear-peeker">🧸</span>${escapeHtml(w)}</span>` },
+      { id: 'owl', regex: /^(owl|owls|hoot)$/i, render: (w) => `<span class="magic-word magic-owl">${escapeHtml(w)}</span>` },
+      { id: 'river', regex: /^(river|stream|water|brook)$/i, render: (w) => `<span class="magic-word magic-river">${escapeHtml(w)}</span>` },
+      { id: 'flower', regex: /^(flower|flowers|bloom|blooms|blossom)$/i, render: (w) => `<span class="magic-word magic-flower"><span class="f-petal fp1"><svg viewBox="0 0 24 24"><path d="M12,2 C13,7 18,8 18,12 C18,16 13,17 12,22 C11,17 6,16 6,12 C6,8 11,7 12,2 Z"/></svg></span><span class="f-petal fp2"><svg viewBox="0 0 24 24"><path d="M12,2 C13,7 18,8 18,12 C18,16 13,17 12,22 C11,17 6,16 6,12 C6,8 11,7 12,2 Z"/></svg></span>${escapeHtml(w)}</span>` },
+      { id: 'firefly', regex: /^(firefly|fireflies)$/i, render: (w) => `<span class="magic-word magic-firefly"><span class="firefly-bug fb1"></span><span class="firefly-bug fb2"></span>${escapeHtml(w)}</span>` },
+      { id: 'tea', regex: /^(tea|cozy|warm)$/i, render: (w) => `<span class="magic-word magic-tea"><span class="tea-steam ts1"><svg viewBox="0 0 10 20"><path d="M2,18 Q8,12 2,6 Q8,2 5,0"/></svg></span><span class="tea-steam ts2"><svg viewBox="0 0 10 20"><path d="M2,18 Q8,12 2,6 Q8,2 5,0"/></svg></span>${escapeHtml(w)}</span>` }
+    ];
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    let lastKnownWords = new Set();
+
+    function renderMagicalStory(text) {
+      if (!text || text.length === 0) {
+        return `<span class="faded-hint">Once upon a time... (start typing your bedtime story here)</span>`;
+      }
+      const tokens = text.match(/([a-zA-Z0-9_'-]+|[^a-zA-Z0-9_'-]+)/g) || [text];
+      let html = '';
+      const currentWords = new Set();
+
+      for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        if (/^[^a-zA-Z0-9_'-]+$/.test(token)) {
+          html += escapeHtml(token);
+          continue;
+        }
+        const matchedRule = MAGIC_RULES.find(r => r.regex.test(token));
+        if (matchedRule) {
+          const isFinished = (i < tokens.length - 1) || (text.endsWith(' ') || text.endsWith('\n') || /[.,!?;:"'—–\(\)]$/.test(text));
+          if (isFinished) {
+            html += matchedRule.render(token);
+            currentWords.add(token.toLowerCase());
+            if (!lastKnownWords.has(token.toLowerCase())) {
+              playMagicChime();
+            }
+          } else {
+            html += escapeHtml(token);
+          }
+        } else {
+          html += escapeHtml(token);
+        }
+      }
+      lastKnownWords = currentWords;
+      return html;
+    }
+
+    function syncStory() {
+      const rawText = storyInput.value;
+      storyRender.innerHTML = renderMagicalStory(rawText);
+      storyInput.style.height = 'auto';
+      const scrollHeight = Math.max(480, storyInput.scrollHeight);
+      storyInput.style.height = scrollHeight + 'px';
+      storyRender.style.height = scrollHeight + 'px';
+    }
+
+    storyInput.addEventListener('input', syncStory);
+    storyInput.addEventListener('scroll', () => {
+      storyRender.scrollTop = storyInput.scrollTop;
+      storyRender.scrollLeft = storyInput.scrollLeft;
+    });
+
+    presetSelector.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (PRESETS[val]) {
+        storyInput.value = PRESETS[val];
+        syncStory();
+        playMagicChime();
+        showToast("Cozy tale loaded!", "📖");
+      }
+    });
+
+    // Spellbook tags insertion
+    spellTags.forEach(tag => {
+      tag.addEventListener('click', () => {
+        const word = tag.getAttribute('data-word');
+        const curVal = storyInput.value;
+        const needsSpace = curVal.length > 0 && !curVal.endsWith(' ') && !curVal.endsWith('\n');
+        storyInput.value = curVal + (needsSpace ? ' ' : '') + word + ' ';
+        syncStory();
+        playMagicChime();
+        storyInput.focus();
+        storyInput.setSelectionRange(storyInput.value.length, storyInput.value.length);
+      });
+    });
+
+    // Font Sizing
+    btnFontSmaller.addEventListener('click', () => {
+      if (currentFontSize > 18) {
+        currentFontSize -= 2;
+        document.documentElement.style.setProperty('--editor-font-size', currentFontSize + 'px');
+        syncStory();
+      }
+    });
+    btnFontBigger.addEventListener('click', () => {
+      if (currentFontSize < 44) {
+        currentFontSize += 2;
+        document.documentElement.style.setProperty('--editor-font-size', currentFontSize + 'px');
+        syncStory();
+      }
+    });
+
+    // Theme Selector
+    btnThemeToggle.addEventListener('click', () => {
+      document.body.classList.remove('theme-candle', 'theme-starlight', 'theme-dream');
+      currentThemeIdx = (currentThemeIdx + 1) % themes.length;
+      const theme = themes[currentThemeIdx];
+
+      if (theme === 'candle') {
+        document.body.classList.add('theme-candle');
+        themeIcon.textContent = '🕯️';
+        themeLabel.textContent = 'Candle';
+      } else if (theme === 'starlight') {
+        document.body.classList.add('theme-starlight');
+        themeIcon.textContent = '🌙';
+        themeLabel.textContent = 'Stars';
+      } else if (theme === 'dream') {
+        document.body.classList.add('theme-dream');
+        themeIcon.textContent = '🌸';
+        themeLabel.textContent = 'Dream';
+      } else {
+        themeIcon.textContent = '☀️';
+        themeLabel.textContent = 'Story';
+      }
+    });
+
+    // Fullscreen Toggle
+    btnFullscreenToggle.addEventListener('click', () => {
+      document.body.classList.toggle('is-fullscreen');
+      const isFull = document.body.classList.contains('is-fullscreen');
+      showToast(isFull ? "Expanded fullscreen mode" : "Restored standard view", "⛶");
+    });
+
+    btnClear.addEventListener('click', () => {
+      storyInput.value = '';
+      presetSelector.value = '';
+      lastKnownWords.clear();
+      syncStory();
+      storyInput.focus();
+      showToast("Fresh page opened.", "✨");
+    });
+
+    silkRibbon.addEventListener('click', () => {
+      playMusicBoxBell(523.25);
+      showToast("Fairytale bookmark tucked in softly.", "🔖");
+    });
+
+    // ==========================================================================
+    // STICKER STAMPING ENGINE
+    // ==========================================================================
+    stickerBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const emoji = btn.dataset.emoji;
+        if (activeStickerEmoji === emoji) {
+          activeStickerEmoji = null;
+          btn.classList.remove('selected');
+          bookPage.classList.remove('stamp-mode');
+        } else {
+          stickerBtns.forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          activeStickerEmoji = emoji;
+          bookPage.classList.add('stamp-mode');
+          showToast(`Tap anywhere on the page to stamp ${emoji}!`, "🎨");
+        }
+      });
+    });
+
+    bookPage.addEventListener('click', (e) => {
+      if (!activeStickerEmoji) return;
+      const rect = bookPage.getBoundingClientRect();
+      const x = e.clientX - rect.left - 20;
+      const y = e.clientY - rect.top - 20;
+
+      const stamp = document.createElement('div');
+      stamp.className = 'page-sticker-stamp';
+      stamp.textContent = activeStickerEmoji;
+      stamp.style.left = `${x}px`;
+      stamp.style.top = `${y}px`;
+
+      stamp.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        stamp.style.transform = 'scale(0) rotate(45deg)';
+        setTimeout(() => stamp.remove(), 200);
+      });
+
+      bookPage.appendChild(stamp);
+      playMagicChime();
+    });
+
+    btnClearStickers.addEventListener('click', () => {
+      const stamps = document.querySelectorAll('.page-sticker-stamp');
+      stamps.forEach(s => s.remove());
+      showToast("Stickers cleaned up!", "✨");
+    });
+
+    // ==========================================================================
+    // GEMINI FEATURES
+    // ==========================================================================
+    // 1. Continue Tale
+    btnAiContinue.addEventListener('click', async () => {
+      const currentText = storyInput.value.trim();
+      const promptText = currentText 
+        ? `Here is the bedtime story for a 4-6 year old child:\n"${currentText}"\n\nPlease write the next 2-3 gentle, calming, soothing sentences. Naturally include 2 or 3 of these magical keywords if fitting: bunny, bear, owl, fox, moon, song, stars, flower, river, firefly, tea, yawn, clouds, asleep. Output ONLY the new sentences.`
+        : `Write the start of a soothing, warm bedtime story for a 4-year-old child about cozy sleepy woodland animals. Keep it 3 sentences long, peaceful, warm, and soporific. Include keywords like bunny, moon, stars, yawn, or asleep. Return ONLY the story.`;
+
+      btnAiContinue.disabled = true;
+      btnAiContinue.innerHTML = `<span class="fairy-spinner"></span> Weaving...`;
+      showToast("Whispering to the fairy muse...", "🌙");
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        const payload = {
+          contents: [{ parts: [{ text: promptText }] }],
+          systemInstruction: { parts: [{ text: "You are a gentle children's bedtime author. Write peaceful, comforting bedtime stories for toddlers and young kids." }] }
+        };
+        const result = await callGeminiApi(url, payload);
+        const continuation = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+        if (continuation) {
+          const sep = storyInput.value.trim().length > 0 ? "\n\n" : "";
+          storyInput.value = storyInput.value + sep + continuation;
+          syncStory();
+          showToast("A new chapter has arrived!", "✨");
+        }
+      } catch (err) {
+        showToast("Could not reach the story stars right now.", "⚠️");
+      } finally {
+        btnAiContinue.disabled = false;
+        btnAiContinue.innerHTML = `<span>✨ Continue Tale</span>`;
+      }
+    });
+
+    // 2. Turn into Bedtime Rhyme
+    btnAiRhyme.addEventListener('click', async () => {
+      const currentText = storyInput.value.trim();
+      if (!currentText) {
+        showToast("Type or choose a story first to turn into rhyme!", "📖");
+        return;
+      }
+
+      btnAiRhyme.disabled = true;
+      btnAiRhyme.innerHTML = `<span class="fairy-spinner"></span> Rhyming...`;
+      showToast("Spinning bedtime rhymes and lullaby verses...", "🎶");
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        const promptText = `Convert this bedtime tale into a sweet, peaceful 4-verse rhyming bedtime lullaby poem suitable for a 4-6 year old:\n"${currentText}"\n\nMake the rhythm bounce gently and peacefully. Include some magic keywords like moon, stars, bunny, fox, bear, song, river, yawn, clouds, asleep. Output ONLY the rhyming poem.`;
+
+        const payload = {
+          contents: [{ parts: [{ text: promptText }] }],
+          systemInstruction: { parts: [{ text: "You write soothing, melodic nursery rhymes and bedtime lullabies for little children." }] }
+        };
+        const result = await callGeminiApi(url, payload);
+        const rhyme = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+        if (rhyme) {
+          storyInput.value = rhyme;
+          syncStory();
+          showToast("Transformed into a bedtime rhyme!", "🎵");
+        }
+      } catch (err) {
+        showToast("Could not weave the rhyme right now.", "⚠️");
+      } finally {
+        btnAiRhyme.disabled = false;
+        btnAiRhyme.innerHTML = `<span>✨ Turn into Rhyme</span>`;
+      }
+    });
+
+    // 3. Read Aloud (Gemini TTS)
+    btnAiRead.addEventListener('click', async () => {
+      if (isReadingAudio) {
+        ttsAudioPlayer.pause();
+        ttsAudioPlayer.currentTime = 0;
+        isReadingAudio = false;
+        btnAiRead.classList.remove('active-reading');
+        readBtnText.textContent = "✨ Read Bedtime Tale";
+        showToast("Bedtime reading paused.", "🌙");
+        return;
+      }
+
+      const currentText = storyInput.value.trim();
+      if (!currentText) {
+        showToast("Write or select a story first!", "📖");
+        return;
+      }
+
+      btnAiRead.disabled = true;
+      readBtnText.innerHTML = `<span class="fairy-spinner"></span> Gathering voice...`;
+      showToast("Calling the bedtime storyteller...", "✨");
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+        const promptSpeech = `Say in a warm, gentle, whispery, peaceful bedtime storytelling voice for a sleepy child: ${currentText}`;
+
+        const payload = {
+          contents: [{ parts: [{ text: promptSpeech }] }],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: selectedVoice } } }
+          },
+          model: "gemini-2.5-flash-preview-tts"
+        };
+
+        const result = await callGeminiApi(url, payload);
+        const part = result.candidates?.[0]?.content?.parts?.[0];
+
+        if (part && part.inlineData && part.inlineData.data) {
+          const audioBlob = pcmToWav(part.inlineData.data, part.inlineData.mimeType);
+          ttsAudioPlayer.src = URL.createObjectURL(audioBlob);
+          ttsAudioPlayer.play();
+          isReadingAudio = true;
+          btnAiRead.classList.add('active-reading');
+          readBtnText.textContent = "⏸️ Pause Tale";
+          showToast("Listening to the bedtime storyteller...", "🎶");
+
+          ttsAudioPlayer.onended = () => {
+            isReadingAudio = false;
+            btnAiRead.classList.remove('active-reading');
+            readBtnText.textContent = "✨ Read Bedtime Tale";
+            showToast("Sweet dreams!", "💤");
+          };
+        }
+      } catch (err) {
+        showToast("The storyteller voice could not be reached.", "⚠️");
+      } finally {
+        btnAiRead.disabled = false;
+        if (!isReadingAudio) readBtnText.textContent = "✨ Read Bedtime Tale";
+      }
+    });
+
+    // 4. Dream Illustration (Imagen 4.0)
+    async function generateIllustration() {
+      const text = storyInput.value.trim() || "A cute tiny fox and baby bunny sleeping under the golden moon with stars and soft snow";
+      illustrateModal.classList.add('active');
+      illustrateStatusText.textContent = "Painting a vintage watercolor picture book illustration...";
+      illustrationBox.innerHTML = `<div class="fairy-spinner" style="width: 40px; height: 40px; border-width: 3px;"></div>`;
+      btnReIllustrate.disabled = true;
+
+      const imagePrompt = `Classic vintage children's bedtime picture book illustration, soft cozy watercolor and colored pencil art style, warm fairy-tale storybook aesthetic, depicting: ${text.slice(0, 300)}. Soft golden lighting, gentle pastel tones, soothing bedtime atmosphere, wholesome, adorable animals, dreamy and comforting for toddlers.`;
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+        const payload = { instances: [{ prompt: imagePrompt }], parameters: { sampleCount: 1 } };
+        const result = await callGeminiApi(url, payload);
+        const b64 = result.predictions?.[0]?.bytesBase64Encoded;
+
+        if (b64) {
+          illustrationBox.innerHTML = `<img src="data:image/png;base64,${b64}" alt="Bedtime Illustration" />`;
+          illustrateStatusText.textContent = "Your bedtime painting:";
+        }
+      } catch (err) {
+        illustrationBox.innerHTML = `<p style="padding: 20px; color: #78350f;">The dream painting faded away. Try again shortly.</p>`;
+      } finally {
+        btnReIllustrate.disabled = false;
+      }
+    }
+    btnAiIllustrate.addEventListener('click', generateIllustration);
+    btnReIllustrate.addEventListener('click', generateIllustration);
+    illustrateClose.addEventListener('click', () => illustrateModal.classList.remove('active'));
+    btnCloseIllustrate.addEventListener('click', () => illustrateModal.classList.remove('active'));
+
+    // 5. Compose Tale Modal
+    btnAiCompose.addEventListener('click', () => composeModal.classList.add('active'));
+    composeClose.addEventListener('click', () => composeModal.classList.remove('active'));
+
+    function setupChips(id, cb) {
+      const chips = document.querySelectorAll(`#${id} .prompt-chip`);
+      chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          chips.forEach(c => c.classList.remove('selected'));
+          chip.classList.add('selected');
+          if (cb) cb(chip.dataset.val);
+        });
+      });
+    }
+    setupChips('chip-character');
+    setupChips('chip-setting');
+    setupChips('chip-voice', (v) => selectedVoice = v);
+
+    btnGenerateTale.addEventListener('click', async () => {
+      const char = document.querySelector('#chip-character .prompt-chip.selected')?.dataset.val || "a tiny cozy fox";
+      const setting = document.querySelector('#chip-setting .prompt-chip.selected')?.dataset.val || "a quiet forest";
+      const notes = customStoryTheme.value.trim();
+
+      const userPrompt = `Create a gentle bedtime story for a 4-6 year old child.
+Character: ${char}
+Setting: ${setting}
+${notes ? `Special Notes: ${notes}` : ""}
+
+Requirements:
+- Length: 2 short, lyrical paragraphs (around 5-7 sentences total).
+- Mood: Calming, sweet, sleepy, reassuring.
+- Include several magic keywords: bunny, bear, owl, fox, moon, song, stars, river, flower, firefly, tea, yawn, clouds, asleep.
+- Return ONLY the story text.`;
+
+      btnGenerateTale.disabled = true;
+      btnGenerateTale.innerHTML = `<span class="fairy-spinner"></span> Weaving...`;
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        const payload = {
+          contents: [{ parts: [{ text: userPrompt }] }],
+          systemInstruction: { parts: [{ text: "You are a beloved author of sleepy fairy tales for young children." }] }
+        };
+        const result = await callGeminiApi(url, payload);
+        const story = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+        if (story) {
+          storyInput.value = story;
+          syncStory();
+          composeModal.classList.remove('active');
+          showToast("A brand new bedtime tale unfolded!", "📖");
+        }
+      } catch (err) {
+        showToast("Could not spin the tale right now.", "⚠️");
+      } finally {
+        btnGenerateTale.disabled = false;
+        btnGenerateTale.textContent = "✨ Weave Bedtime Tale";
+      }
+    });
+
+    window.addEventListener('click', (e) => {
+      if (e.target === composeModal) composeModal.classList.remove('active');
+      if (e.target === illustrateModal) illustrateModal.classList.remove('active');
+    });
+
+    // ==========================================================================
+    // AUDIO SYNTHESIS & BEDTIME SOUNDSCAPES
+    // ==========================================================================
+    let audioCtx = null;
+    let soundscapeMode = 0; // 0: Lullaby, 1: Night Forest, 2: Cozy Rain, 3: Off
+    const soundscapeNames = ["Lullaby", "Night Forest", "Cozy Rain", "Off"];
+    const soundscapeIcons = ["🎶", "🦉", "🌧️", "🔇"];
+    let lullabyTimer = null;
+    let rainNode = null;
+    let cricketTimer = null;
+
+    function initAudioCtx() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playMusicBoxBell(freq) {
+      if (!audioCtx || freq <= 0) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.06, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.4);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 2.5);
+    }
+
+    function playMagicChime() {
+      initAudioCtx();
+      if (!audioCtx) return;
+      const chords = [523.25, 659.25, 783.99, 1046.50];
+      chords.forEach((freq, idx) => {
+        setTimeout(() => playMusicBoxBell(freq), idx * 75);
+      });
+    }
+
+    // Pentatonic Lullaby Melody
+    const LULLABY_NOTES = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
+    const LULLABY_STEPS = [0, 2, 4, 2, 0, 4, 3, 2, 0, 2, 4, 5, 4, 2, 0, -1, 4, 4, 3, 2, 3, 3, 2, 0, 0, 2, 4, 2, 0, -1, 0, -1];
+    let noteIdx = 0;
+
+    function startLullaby() {
+      stopAllSoundscapes();
+      noteIdx = 0;
+      lullabyTimer = setInterval(() => {
+        const step = LULLABY_STEPS[noteIdx % LULLABY_STEPS.length];
+        if (step >= 0) playMusicBoxBell(LULLABY_NOTES[step]);
+        noteIdx++;
+      }, 1100);
+    }
+
+    function startNightForest() {
+      stopAllSoundscapes();
+      cricketTimer = setInterval(() => {
+        if (!audioCtx) return;
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(4500 + Math.random() * 800, now);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.015, now + 0.05);
+        gain.gain.linearRampToValueAtTime(0.0001, now + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      }, 240);
+    }
+
+    function startCozyRain() {
+      stopAllSoundscapes();
+      if (!audioCtx) return;
+      const bufferSize = audioCtx.sampleRate * 2;
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      let lastOut = 0.0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        output[i] = (lastOut + (0.02 * white)) / 1.02;
+        lastOut = output[i];
+        output[i] *= 2.5;
+      }
+      rainNode = audioCtx.createBufferSource();
+      rainNode.buffer = noiseBuffer;
+      rainNode.loop = true;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 800;
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0.025;
+      rainNode.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      rainNode.start();
+    }
+
+    function stopAllSoundscapes() {
+      if (lullabyTimer) { clearInterval(lullabyTimer); lullabyTimer = null; }
+      if (cricketTimer) { clearInterval(cricketTimer); cricketTimer = null; }
+      if (rainNode) { rainNode.stop(); rainNode.disconnect(); rainNode = null; }
+    }
+
+    btnSoundscapeToggle.addEventListener('click', () => {
+      initAudioCtx();
+      soundscapeMode = (soundscapeMode + 1) % 4;
+      soundIcon.textContent = soundscapeIcons[soundscapeMode];
+      soundLabel.textContent = soundscapeNames[soundscapeMode];
+      ambientStatus.textContent = `🎵 Ambient: ${soundscapeNames[soundscapeMode]}`;
+
+      if (soundscapeMode === 0) startLullaby();
+      else if (soundscapeMode === 1) startNightForest();
+      else if (soundscapeMode === 2) startCozyRain();
+      else stopAllSoundscapes();
+    });
+
+    // ==========================================================================
+    // FAIRY WAND STARDUST TRAIL & AMBIENT DUST
+    // ==========================================================================
+    const wandCanvas = document.getElementById('wand-canvas');
+    const wandCtx = wandCanvas.getContext('2d');
+    let wandParticles = [];
+
+    function resizeCanvases() {
+      wandCanvas.width = window.innerWidth;
+      wandCanvas.height = window.innerHeight;
+      ambientCanvas.width = window.innerWidth;
+      ambientCanvas.height = window.innerHeight;
+    }
+    const ambientCanvas = document.getElementById('ambient-canvas');
+    const ambientCtx = ambientCanvas.getContext('2d');
+    window.addEventListener('resize', resizeCanvases);
+    resizeCanvases();
+
+    btnWandToggle.addEventListener('click', () => {
+      wandEnabled = !wandEnabled;
+      btnWandToggle.classList.toggle('active-ctrl', wandEnabled);
+      showToast(wandEnabled ? "Fairy wand stardust enabled!" : "Fairy wand stardust resting.", "🪄");
+    });
+
+    function spawnWandSpark(x, y) {
+      if (!wandEnabled) return;
+      for (let i = 0; i < 3; i++) {
+        wandParticles.push({
+          x: x + (Math.random() - 0.5) * 10,
+          y: y + (Math.random() - 0.5) * 10,
+          vx: (Math.random() - 0.5) * 1.8,
+          vy: (Math.random() - 0.5) * 1.8 - 0.6,
+          size: Math.random() * 4 + 1.5,
+          alpha: 1,
+          hue: Math.random() > 0.4 ? 45 : 320
+        });
+      }
+    }
+
+    window.addEventListener('mousemove', (e) => spawnWandSpark(e.clientX, e.clientY));
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches[0]) spawnWandSpark(e.touches[0].clientX, e.touches[0].clientY);
+    });
+
+    function renderWand() {
+      wandCtx.clearRect(0, 0, wandCanvas.width, wandCanvas.height);
+      for (let i = wandParticles.length - 1; i >= 0; i--) {
+        const p = wandParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.03;
+        p.alpha -= 0.02;
+        if (p.alpha <= 0) {
+          wandParticles.splice(i, 1);
+          continue;
+        }
+        wandCtx.beginPath();
+        wandCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        wandCtx.fillStyle = `hsla(${p.hue}, 95%, 70%, ${p.alpha})`;
+        wandCtx.shadowBlur = 8;
+        wandCtx.shadowColor = `hsla(${p.hue}, 100%, 65%, 0.8)`;
+        wandCtx.fill();
+      }
+      requestAnimationFrame(renderWand);
+    }
+    renderWand();
+
+    // Ambient floating dust
+    const ambientParticles = [];
+    for (let i = 0; i < 38; i++) {
+      ambientParticles.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        size: Math.random() * 2 + 0.6,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: -Math.random() * 0.35 - 0.08,
+        alpha: Math.random() * 0.6 + 0.1,
+        pulse: Math.random() * Math.PI * 2
+      });
+    }
+
+    function renderAmbient() {
+      ambientCtx.clearRect(0, 0, ambientCanvas.width, ambientCanvas.height);
+      ambientParticles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.pulse += 0.02;
+        if (p.y < -10) { p.y = ambientCanvas.height + 5; p.x = Math.random() * ambientCanvas.width; }
+        const a = Math.max(0, p.alpha * (0.6 + Math.sin(p.pulse) * 0.4));
+        ambientCtx.beginPath();
+        ambientCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ambientCtx.fillStyle = `rgba(235, 195, 95, ${a})`;
+        ambientCtx.fill();
+      });
+      requestAnimationFrame(renderAmbient);
+    }
+    renderAmbient();
+
+    // Initial render
+    syncStory();
+  </script>
+</body>
+</html>
